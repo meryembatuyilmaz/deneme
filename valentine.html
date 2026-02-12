@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sevgililer Günümüz 💗</title>
+
+<style>
+body{
+  margin:0;
+  background:black;
+  overflow:hidden;
+  font-family:Arial, sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  color:white;
+}
+
+/* FOTO */
+#photo{
+  position:absolute;
+  max-width:70%;
+  max-height:70%;
+  border-radius:20px;
+  box-shadow:0 0 60px rgba(255,105,180,0.6);
+  opacity:0;
+  transition:opacity 2s ease, filter 2s ease, transform 6s ease;
+  filter:blur(15px);
+  cursor:pointer;
+}
+
+#photo.active{
+  opacity:1;
+  filter:blur(0px);
+  transform:scale(1.08);
+}
+
+/* ZOOM */
+#photo.zoomed{
+  position:fixed;
+  max-width:92%;
+  max-height:92%;
+  z-index:1001;
+  transform:scale(1);
+  transition:all 0.4s ease;
+}
+
+/* OVERLAY */
+#overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  backdrop-filter:blur(10px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.4s ease;
+  z-index:1000;
+}
+
+#overlay.active{
+  opacity:1;
+  pointer-events:all;
+}
+
+/* TEXT */
+#textBox{
+  position:absolute;
+  text-align:center;
+  opacity:0;
+  transition:opacity 3s ease;
+  animation:glow 3s infinite alternate;
+}
+
+#textBox h1{
+  font-size:36px;
+}
+
+#textBox p{
+  font-size:16px;
+  margin-top:15px;
+  opacity:0.85;
+}
+
+@keyframes glow{
+  from{ text-shadow:0 0 10px #ff7eb9; }
+  to{ text-shadow:0 0 50px #ff1493; }
+}
+
+/* HEARTS */
+.heart{
+  position:absolute;
+  color:#ff7eb9;
+  animation:float linear infinite;
+  opacity:0.6;
+}
+
+@keyframes float{
+  from{ transform:translateY(100vh); }
+  to{ transform:translateY(-10vh); }
+}
+</style>
+</head>
+
+<body>
+
+<img id="photo">
+<div id="overlay"></div>
+
+<div id="textBox">
+  <h1 id="mainTitle"></h1>
+  <p id="subText"></p>
+</div>
+
+<script>
+
+/* FOTO LİSTESİ (1–33) */
+const photos = [];
+for(let i = 1; i <= 33; i++){
+  photos.push(`foto${i}.jpg`);
+}
+
+const photoElement = document.getElementById("photo");
+const overlay = document.getElementById("overlay");
+
+let index = 0;
+let intervalTime = 4000;
+let slideshowInterval;
+
+/* FOTO GÖSTER */
+function showNextPhoto(){
+
+  if(index >= photos.length){
+    clearInterval(slideshowInterval);
+    return;
+  }
+
+  photoElement.classList.remove("active");
+
+  setTimeout(()=>{
+    photoElement.src = photos[index];
+    photoElement.classList.add("active");
+
+    // Son 3 foto yavaş
+    if(index >= photos.length - 3){
+      clearInterval(slideshowInterval);
+      intervalTime = 6000;
+      slideshowInterval = setInterval(showNextPhoto, intervalTime);
+    }
+
+    // Son 2 foto yazı başlat
+    if(index === photos.length - 2){
+      showText();
+    }
+
+    index++;
+
+  },1200);
+}
+
+/* BAŞLAT */
+slideshowInterval = setInterval(showNextPhoto, intervalTime);
+showNextPhoto();
+
+/* ZOOM */
+photoElement.addEventListener("click", () => {
+  photoElement.classList.toggle("zoomed");
+  overlay.classList.toggle("active");
+});
+
+overlay.addEventListener("click", () => {
+  photoElement.classList.remove("zoomed");
+  overlay.classList.remove("active");
+});
+
+/* OK TUŞLARI */
+document.addEventListener("keydown", (e)=>{
+  if(!photoElement.classList.contains("zoomed")) return;
+
+  if(e.key==="ArrowRight"){
+    index = (index+1) % photos.length;
+    photoElement.src = photos[index];
+  }
+  if(e.key==="ArrowLeft"){
+    index = (index-1+photos.length) % photos.length;
+    photoElement.src = photos[index];
+  }
+});
+
+/* SWIPE */
+let startX = 0;
+
+photoElement.addEventListener("touchstart", e=>{
+  startX = e.touches[0].clientX;
+});
+
+photoElement.addEventListener("touchend", e=>{
+  let endX = e.changedTouches[0].clientX;
+  if(endX - startX > 50){
+    index = (index-1+photos.length)%photos.length;
+    photoElement.src = photos[index];
+  }
+  if(startX - endX > 50){
+    index = (index+1)%photos.length;
+    photoElement.src = photos[index];
+  }
+});
+
+/* YAZI */
+function typeText(element, text, speed){
+  element.innerHTML = "";
+  let i=0;
+  const interval = setInterval(()=>{
+    element.innerHTML += text[i];
+    i++;
+    if(i>=text.length) clearInterval(interval);
+  },speed);
+}
+
+function showText(){
+  const box = document.getElementById("textBox");
+  box.style.opacity = 1;
+
+  typeText(
+    document.getElementById("mainTitle"),
+    "Sevgililer Günün Kutlu Olsun Çiçeğim...",
+    70
+  );
+
+  setTimeout(()=>{
+    typeText(
+      document.getElementById("subText"),
+      "Benim Sevgilim ve Benim Anılarım olduğun için teşekkür ederim Papatyam...",
+      40
+    );
+  },2500);
+}
+
+/* HEART PARTICLES */
+setInterval(()=>{
+  const h = document.createElement("div");
+  h.className="heart";
+  h.innerHTML="💗";
+  h.style.left=Math.random()*100+"vw";
+  h.style.fontSize=(15+Math.random()*20)+"px";
+  h.style.animationDuration=(6+Math.random()*5)+"s";
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),10000);
+},400);
+
+</script>
+
+</body>
+</html>
